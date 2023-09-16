@@ -38,19 +38,27 @@ int main(int argc, char* argv[])
 			fprintf(stderr, "fork failed\n");
 		}
 		else if (rc == 0){
-			char binPath[chars_read + strlen(PATH)];
-			strcat(binPath, PATH);
+			//printf("Line: %s\n", stdin_line);
+			//printf("Read: %li\n", chars_read);
+			//printf("path: %li\n", strlen(PATH));
+
+			char binPath[chars_read + strlen(PATH) + 1];
+			strcpy(binPath, PATH);
 			// TODO: must parse stdin_line for cmd + args!
-			strcat(binPath, stdin_line); 
+			strcat(binPath, stdin_line);
+			printf("BIN PATH:%s\n", binPath); 
 			
 			// determine if binary exists
-			if (access(binPath, F_OK) == 0){
-
+			// TODO: create dircnt() to count number of directories in a path. 
+			// Then use that number to generate parent directory prefix string (i.e. "../") dircnt() times!
+			char *binPath1 = "../../../../bin/ls"; 
+			printf("F access: %i\n", access(binPath1, F_OK));
+			if (access(binPath1, F_OK) == 0){
 				// determine executable permissions for binary
-				if (access(binPath, X_OK) == 0){
+				if (access(binPath1, X_OK) == 0){
 					// TODO: must parse input for args
-					char *args[] = {NULL};
-					execv(binPath, args);
+					char *args[] = {"-all"};
+					execv(binPath1, args);
 				}
 				else{
 					perror("Unable to execute binary\n");
