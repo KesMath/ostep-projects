@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -12,10 +13,10 @@
 // -support parallel cmds
 
 // -support add error msg per README
-// 
+
 struct user_input {
-    char *stdin_line;
-    size_t stdin_len;
+    char **stdin_line;
+    size_t *stdin_len;
     } *input;
 
 int main(int argc, char* argv[])
@@ -42,11 +43,10 @@ int main(int argc, char* argv[])
 			fprintf(stderr, "fork failed\n");
 		}
 		else if (rc == 0){
-            
 			char binPath[chars_read + strlen(PATH)];
 			strcat(binPath, PATH);
 			// TODO: must parse input->stdin_line for cmd + args!
-			strcat(binPath, input->stdin_line); 
+			strcat(binPath, *input->stdin_line); 
 			
 			// determine if binary exists
 			if (access(binPath, F_OK) == 0){
