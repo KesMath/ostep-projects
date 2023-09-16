@@ -14,27 +14,22 @@
 
 // -support add error msg per README
 
-struct user_input {
-    char **stdin_line;
-    size_t *stdin_len;
-    } *input;
-
 int main(int argc, char* argv[])
 {
-    input->stdin_line = NULL;
-    input->stdin_len = 0;
-	 ssize_t chars_read;
-	 char *PATH = "/bin/";
+    char * stdin_line = NULL;
+    size_t stdin_len = 0;
+	size_t chars_read;
+	char *PATH = "/bin/";
 
     printf("wish> ");
     fflush( stdout );
     while (1){
       // obtain user cmd
-		chars_read = getline(input->stdin_line, input->stdin_len, stdin);
+		chars_read = getline(&stdin_line, &stdin_len, stdin);
 
 		if(chars_read < 0){
 			perror("Unable to read user input");
-			free(input->stdin_line);
+			free(stdin_line);
 			exit(1);
 		}
 
@@ -45,8 +40,8 @@ int main(int argc, char* argv[])
 		else if (rc == 0){
 			char binPath[chars_read + strlen(PATH)];
 			strcat(binPath, PATH);
-			// TODO: must parse input->stdin_line for cmd + args!
-			strcat(binPath, *input->stdin_line); 
+			// TODO: must parse stdin_line for cmd + args!
+			strcat(binPath, stdin_line); 
 			
 			// determine if binary exists
 			if (access(binPath, F_OK) == 0){
@@ -71,9 +66,9 @@ int main(int argc, char* argv[])
 			printf("wish> ");
 			fflush( stdout );
 			// reset state in order for getline() to work on next iteration.
-			free(input->stdin_line);
-			input->stdin_line = NULL;
-			input->stdin_len = 0;
+			free(stdin_line);
+			stdin_line = NULL;
+			stdin_len = 0;
 		}
    }
 
