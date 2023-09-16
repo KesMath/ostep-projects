@@ -42,6 +42,7 @@ int main(int argc, char* argv[])
 			fprintf(stderr, "fork failed\n");
 		}
 		else if (rc == 0){
+            
 			char binPath[chars_read + strlen(PATH)];
 			strcat(binPath, PATH);
 			// TODO: must parse input->stdin_line for cmd + args!
