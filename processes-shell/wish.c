@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 	 ssize_t chars_read;
 	 char *PATH = "/bin/";
 
-    printf("wish>");
+    printf("wish> ");
     fflush( stdout );
     while (1){
       // obtain user cmd
@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
 		else{
 			// wait for child to finish and print shell prompt again
 			wait(NULL);
-			printf("wish>");
+			printf("wish> ");
 			fflush( stdout );
 			// reset state in order for getline() to work on next iteration.
 			free(input->stdin_line);
