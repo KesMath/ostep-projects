@@ -4,6 +4,7 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 
 
 // TODO LIST
@@ -26,6 +27,7 @@ int main(int argc, char* argv[])
     while (1){
       // obtain user cmd
 		chars_read = getline(&stdin_line, &stdin_len, stdin);
+		stdin_line[strlen(stdin_line) - 1] = '\0';
 
 		if(chars_read < 0){
 			perror("Unable to read user input");
@@ -45,20 +47,14 @@ int main(int argc, char* argv[])
 			char binPath[chars_read + strlen(PATH) + 1];
 			strcpy(binPath, PATH);
 			// TODO: must parse stdin_line for cmd + args!
-			strcat(binPath, stdin_line);
-			printf("BIN PATH:%s\n", binPath); 
+			strcat(binPath, stdin_line); 
 			
-			// determine if binary exists
-			// TODO: create dircnt() to count number of directories in a path. 
-			// Then use that number to generate parent directory prefix string (i.e. "../") dircnt() times!
-			char *binPath1 = "../../../../bin/ls"; 
-			printf("F access: %i\n", access(binPath1, F_OK));
-			if (access(binPath1, F_OK) == 0){
+			if (access(binPath, F_OK) == 0){
 				// determine executable permissions for binary
-				if (access(binPath1, X_OK) == 0){
+				if (access(binPath, X_OK) == 0){
 					// TODO: must parse input for args
 					char *args[] = {"-all"};
-					execv(binPath1, args);
+					execv(binPath, args);
 				}
 				else{
 					perror("Unable to execute binary\n");
