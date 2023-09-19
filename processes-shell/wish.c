@@ -18,8 +18,8 @@
 
 // returns a list of args
 // Given: "cmd -a -b -c"
-// Returns: ["a", "b", "c"] 
-char** generate_args(char* user_input){
+// Returns: args = ["cmd", "a", "b", "c", NULL]
+char** str_to_strlist(char* str){
 
 }
 
@@ -60,7 +60,8 @@ int main(int argc, char* argv[])
 			if (access(binPath, F_OK) == 0){
 				// determine executable permissions for binary
 				if (access(binPath, X_OK) == 0){
-					execv(binPath, generate_args(stdin_line));
+					//char* args[] = {"ls", "-l", "--author", NULL};
+					execv(binPath, str_to_strlist(stdin_line));
 				}
 				else{
 					perror("Unable to execute binary\n");
