@@ -9,10 +9,19 @@
 // TODO LIST
 // -support batch-mode
 // -support built-ins
+
+
 // -support redirections from std_out -> user file
 // -support parallel cmds
-
 // -support add error msg per README
+
+
+// returns a list of args
+// Given: "cmd -a -b -c"
+// Returns: ["a", "b", "c"] 
+char** generate_args(char* user_input){
+
+}
 
 int main(int argc, char* argv[])
 {
@@ -51,9 +60,7 @@ int main(int argc, char* argv[])
 			if (access(binPath, F_OK) == 0){
 				// determine executable permissions for binary
 				if (access(binPath, X_OK) == 0){
-					// TODO: must parse input for args
-					char *args[] = {"-all"};
-					execv(binPath, args);
+					execv(binPath, generate_args(stdin_line));
 				}
 				else{
 					perror("Unable to execute binary\n");
