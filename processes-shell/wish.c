@@ -16,11 +16,34 @@
 // -support add error msg per README
 
 
+int cout_occurence(char * str, char c){
+	int cout = 0;
+    for(int i = 0; i < strlen(str); i++){
+        if (str[i] == c) {
+            cout++;
+        }
+    }
+	return cout;
+}
+
 // returns a list of args
 // Given: "cmd -a -b -c"
 // Returns: args = ["cmd", "a", "b", "c", NULL]
 char** str_to_strlist(char* str){
-
+	int cout = cout_occurence(str, ' ') + 2; // for args[0] and args[len(args) - 1]! 
+	char ** arr = (char**) malloc(cout * sizeof(char*)); // 8 bytes per char* in arr 
+	if(arr == NULL){
+		perror("Unable to allocate heap space");
+		exit(EXIT_FAILURE);
+	}
+	char *token = strtok(str, " ");
+    while (token != NULL)
+    {
+        strcpy(arr, token);
+        token = strtok(NULL, " ");
+    }
+	strcpy(arr, NULL);
+	return arr;
 }
 
 int main(int argc, char* argv[])
@@ -61,7 +84,9 @@ int main(int argc, char* argv[])
 				// determine executable permissions for binary
 				if (access(binPath, X_OK) == 0){
 					//char* args[] = {"ls", "-l", "--author", NULL};
-					execv(binPath, str_to_strlist(stdin_line));
+					char* args[] = str_to_strlist(stdin_line);
+					execv(binPath, args);
+					free(args);
 				}
 				else{
 					perror("Unable to execute binary\n");
@@ -84,3 +109,8 @@ int main(int argc, char* argv[])
    }
 
 }
+
+// // TEST MAIN
+// int main(){
+// 	printf("%li\n", sizeof(NULL));
+// }
