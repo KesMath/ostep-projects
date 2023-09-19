@@ -37,12 +37,16 @@ char** str_to_strlist(char* str){
 		exit(EXIT_FAILURE);
 	}
 	char *token = strtok(str, " ");
+	int i = 0;
     while (token != NULL)
     {
-        strcpy(arr, token);
+		//TODO: may have to free(arr[i]) then free(arr).
+		// in other words, may have to free the 'nested' pointers then the 'main' pointer
+		arr[i] = malloc(sizeof(char) * strlen(token) + 1);
+        strcpy(arr[i++], token);
         token = strtok(NULL, " ");
     }
-	strcpy(arr, NULL);
+	arr[i] = NULL;
 	return arr;
 }
 
@@ -112,5 +116,5 @@ int main(int argc, char* argv[])
 
 // // TEST MAIN
 // int main(){
-// 	printf("%li\n", sizeof(NULL));
+// 	char** args = str_to_strlist("cmd -a -b -c");
 // }
