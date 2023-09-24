@@ -70,7 +70,8 @@ int index_of_char(char* src, char delim){
 			return i;
 		}
 	}
-	return -1;
+	// assuming cmd is without args, we want to capture the entire string
+	return strlen(src);
 }
 
 // TODO: refactor/remove this redundant function
@@ -119,9 +120,6 @@ int main(int argc, char* argv[])
 			char cmd[sz];
 			copy_up_to_delim(cmd, sz, stdin_line);
 			strcat(binPath, cmd);
-			//printf("%s\n", binPath);
-			//printf("%s\n", stdin_line);
-			//printf("%s\n", cmd); 
 			
 			if (access(binPath, F_OK) == 0){
 				// determine executable permissions for binary
@@ -136,10 +134,6 @@ int main(int argc, char* argv[])
 						ptr_to_charArr(buff, stdin_line);
 						str_to_strList(args, buff);
 
-						// printf("%s\n", binPath);
-						// for(int i = 0; i < len; i++){
-						// 	printf("%s\n", args[i]);
-						// }
 						execv(binPath, args);
 						cleanup_list_alloc(args, len);
 					}
