@@ -56,7 +56,7 @@ char** str_to_strList(char* arr[], char* str){
 	arr[i] = NULL;
 	return arr;
 }
-// TODO: refactor to use strlen()
+// TODO: refactor to use strlen() 
 void cleanup_list_alloc(char* arr[], int len){
 	for(int i = 0; i < len; i++){
 		free(arr[i]);
