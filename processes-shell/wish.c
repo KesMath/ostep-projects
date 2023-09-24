@@ -40,13 +40,13 @@ char* ptr_to_charArr(char dest[], char* src){
 // Given: "cmd -a -b -c"
 // Returns: args = ["cmd", "a", "b", "c", NULL]
 char** str_to_strList(char* arr[], char* str){
-	//int cout = cout_occurence(str, *WHITESPACE) + 2; // for args[0] and args[len(args) - 1]! 
 	char *token = strtok(str, WHITESPACE);
 	int i = 0;
     while (token != NULL)
     {
 		arr[i] = (char *) malloc((sizeof(char) * strlen(token)) + 1);
 		if(!arr[i]){
+			// TODO: call cleanup_list_alloc()
 			perror("Unable to allocate heap space");
 			exit(EXIT_FAILURE);
 		}
@@ -56,7 +56,7 @@ char** str_to_strList(char* arr[], char* str){
 	arr[i] = NULL;
 	return arr;
 }
-
+// TODO: refactor to use strlen()
 void cleanup_list_alloc(char* arr[], int len){
 	for(int i = 0; i < len; i++){
 		free(arr[i]);
@@ -74,6 +74,7 @@ int index_of_char(char* src, char delim){
 	return strlen(src);
 }
 
+// TODO: refactor to use strlen()
 // TODO: refactor/remove this redundant function
 char* copy_up_to_delim(char dest[], size_t index, char* src){
 	for(int i = 0; i < index; i++){
