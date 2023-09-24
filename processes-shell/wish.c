@@ -44,8 +44,6 @@ char** str_to_strlist(char* arr[], char* str){
 	int i = 0;
     while (token != NULL)
     {
-		//TODO: may have to free(arr[i]) then free(arr).
-		// in other words, may have to free the 'nested' pointers then the 'main' pointer
 		arr[i] = (char *) malloc((sizeof(char) * strlen(token)) + 1);
 		if(!arr[i]){
 			perror("Unable to allocate heap space");
@@ -56,6 +54,12 @@ char** str_to_strlist(char* arr[], char* str){
     }
 	arr[i] = NULL;
 	return arr;
+}
+
+void cleanup_list_alloc(char* arr[], int len){
+	for(int i = 0; i < len; i++){
+		free(arr[i]);
+	}
 }
 
 // int main(int argc, char* argv[])
@@ -131,10 +135,14 @@ char** str_to_strlist(char* arr[], char* str){
 //TEST MAIN
 int main(){
 	char* s = "cmd -a -b -c";
-
+	int len = cout_occurence(s, *WHITESPACE) + 2;
 	char buff[strlen(s) + 1];
-	char* arr[cout_occurence(s, *WHITESPACE)];
-	
+	char* arr[len];
+
 	ptr_to_strArr(buff, s);
 	str_to_strlist(arr, buff);
+	for(int i = 0; i < len; i++){
+		printf("%s\n", arr[i]);
+	}
+	cleanup_list_alloc(arr, len);
 }
