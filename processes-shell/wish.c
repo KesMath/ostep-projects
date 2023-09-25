@@ -7,8 +7,9 @@
 
 
 // TODO LIST
-// -support batch-mode
 // -support built-ins
+// fix return-back-to-prompt when given wrong cmd
+// -support batch-mode
 
 
 // -support redirections from std_out -> user file
@@ -36,6 +37,13 @@ char* ptr_to_charArr(char dest[], char* src){
 	dest[i] = '\0';
 	return dest;
 }
+
+// TODO: refactor to use arrlen() 
+void cleanup_list_alloc(char* arr[], int len){
+	for(int i = 0; i < len; i++){
+		free(arr[i]);
+	}
+}
 // returns a list of args
 // Given: "cmd -a -b -c"
 // Returns: args = ["cmd", "a", "b", "c", NULL]
@@ -46,7 +54,7 @@ char** str_to_strList(char* arr[], char* str){
     {
 		arr[i] = (char *) malloc((sizeof(char) * strlen(token)) + 1);
 		if(!arr[i]){
-			// TODO: call cleanup_list_alloc()
+			cleanup_list_alloc(arr, i); // counter only increases per successful alloc. Thus, we only cleanup 'counter' times
 			perror("Unable to allocate heap space");
 			exit(EXIT_FAILURE);
 		}
@@ -55,12 +63,6 @@ char** str_to_strList(char* arr[], char* str){
     }
 	arr[i] = NULL;
 	return arr;
-}
-// TODO: refactor to use strlen() 
-void cleanup_list_alloc(char* arr[], int len){
-	for(int i = 0; i < len; i++){
-		free(arr[i]);
-	}
 }
 
 int index_of_char(char* src, char delim){
@@ -74,8 +76,6 @@ int index_of_char(char* src, char delim){
 	return strlen(src);
 }
 
-// TODO: refactor to use strlen()
-// TODO: refactor/remove this redundant function
 char* copy_up_to_delim(char dest[], size_t index, char* src){
 	for(int i = 0; i < index; i++){
 		dest[i] = src[i];
@@ -181,7 +181,7 @@ int main(int argc, char* argv[])
 	// }
 	// cleanup_list_alloc(arr, len);
 
-	// ---------------------------
+	// // ---------------------------
 	// char* s = "ls -a -b -c";
 	// int sz = index_of_char(s, *WHITESPACE) + 1;
 	// printf("%i\n", sz);
