@@ -19,22 +19,6 @@ const char WHITESPACE_DELIMITER[2] = " ";
 const char PROMPT[6] = "wish> ";
 const char *BUILT_IN_CMDS[] = { "cd", "exit", "path" };
 
-
-int is_built_in_cmd(char * str){
-	if(strcasecmp(BUILT_IN_CMDS[0], str) == 0){
-		return 1;
-	}
-	else if (strcasecmp(BUILT_IN_CMDS[1], str) == 0){
-		return 2;
-	}
-	else if (strcasecmp(BUILT_IN_CMDS[2], str) == 0){
-		return 3;
-	}
-	else{
-		return -1;
-	}
-}
-
 int cout_occurence(char * str, char c){
 	int cout = 0;
     for(int i = 0; i < strlen(str); i++){
@@ -124,10 +108,6 @@ int main(int argc, char* argv[])
 			fprintf(stderr, "fork failed\n");
 		}
 		else if (rc == 0){
-			//printf("Line: %s\n", stdin_line);
-			//printf("Read: %li\n", chars_read);
-			//printf("path: %li\n", strlen(PATH));
-
 			char binPath[chars_read + strlen(PATH) + 1];
 			strcpy(binPath, PATH);
 			
@@ -136,41 +116,51 @@ int main(int argc, char* argv[])
 			char cmd[sz];
 			copy_up_to_delim(cmd, sz, stdin_line);
 			strcat(binPath, cmd);
+			int len = cout_occurence(stdin_line, *WHITESPACE_DELIMITER);
+			len+=2; // allocating space for ["cmd", ... , NULL]
+			char* args[len];
+			char buff[strlen(stdin_line) + 1];
+		
+			ptr_to_charArr(buff, stdin_line);
+			str_to_strList(args, buff);
 
-			// check for built-in cmd
-			
-			if (access(binPath, F_OK) == 0){
-				// determine executable permissions for binary
-				if (access(binPath, X_OK) == 0){
-					int len = cout_occurence(stdin_line, *WHITESPACE_DELIMITER);
-
-					if(len > 0){ // implies existence of args
-						len+=2; // allocating space for ["cmd", ... , NULL]
-						char* args[len];
-						char buff[strlen(stdin_line) + 1];
-					
-						ptr_to_charArr(buff, stdin_line);
-						str_to_strList(args, buff);
-
-						execv(binPath, args);
-						cleanup_list_alloc(args, len);
+			if(strcasecmp(BUILT_IN_CMDS[0], stdin_line) == 0){ // stdin_line is 'cd'
+				return 1;
+			}
+			else if (strcasecmp(BUILT_IN_CMDS[1], stdin_line) == 0){ // stdin_line is 'exit'
+				printf("Child process exiting!\n"); 
+				exit(0);
+			}
+			else if (strcasecmp(BUILT_IN_CMDS[2], stdin_line) == 0){ // stdin_line is 'path'
+				return 3;
+			}
+			else{ // non-builtin cmd
+				if (access(binPath, F_OK) == 0){
+					// determine executable permissions for binary
+					if (access(binPath, X_OK) == 0){
+						if(len > 0){ // implies existence of args
+							execv(binPath, args);
+							cleanup_list_alloc(args, len);
+						}
+						else{
+							char *no_args[] = {" "}; // placeholder to satisfy compiler error
+							execv(binPath, no_args);
+							free(stdin_line);
+						}
 					}
 					else{
-						char *args[] = {" "}; // placeholder to satisfy compiler error
-						execv(binPath, args);
-						free(stdin_line);
+						perror("Unable to execute binary\n");
 					}
 				}
 				else{
-					perror("Unable to execute binary\n");
+					perror("Command not found\n");
 				}
-			}
-			else{
-				perror("Command not found\n");
 			}
 		}
 		else{
 			// wait for child to finish and print shell prompt again
+			// TODO: modify wait() to receive when child terminates normally:
+			// according to "man wait": WIFEXITED: returns true if the child terminated normally, that is, by calling exit(3) or _exit(2), or by returning from main().
 			wait(NULL);
 			printf("%s", PROMPT);
 			fflush( stdout );
@@ -180,7 +170,6 @@ int main(int argc, char* argv[])
 			stdin_len = 0;
 		}
    }
-
 }
 
 
