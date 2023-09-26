@@ -5,15 +5,17 @@
 #include <string.h>
 #include <stdlib.h>
 
-// TODO LIST
-// -support built-ins
-// fix return-back-to-prompt when given wrong cmd
+// ========= FEATURES TO IMPLEMENT =========
+// -support built-ins (exit & path)
 
 // -support batch-mode
-// -support passing in path var
 // -support redirections from std_out -> user file
 // -support parallel cmds
 // -support add error msg per README
+
+// ========= TECHNICAL DEBT =========
+// -support repetitive \n doesn't break shell
+// fix return-back-to-prompt when given wrong cmd
 
 const char WHITESPACE_DELIMITER[2] = " ";
 const char PROMPT[6] = "wish> ";
@@ -124,29 +126,29 @@ int main(int argc, char* argv[])
 			ptr_to_charArr(buff, stdin_line);
 			str_to_strList(args, buff);
 
-			if(strcasecmp(BUILT_IN_CMDS[0], stdin_line) == 0){ // stdin_line is 'cd'
-				return 1;
+			if(strcasecmp(BUILT_IN_CMDS[0], args[0]) == 0){ // stdin_line is 'cd'
+				int ret_code = chdir(args[1]);
+				if(ret_code == -1){
+					perror("Unable to change to directory.\n");
+				}
+				// prompt disappears for some odd reason so re-printing prompt
+				printf("%s", PROMPT);
+				fflush( stdout );
 			}
-			else if (strcasecmp(BUILT_IN_CMDS[1], stdin_line) == 0){ // stdin_line is 'exit'
+			else if (strcasecmp(BUILT_IN_CMDS[1], args[0]) == 0){ // stdin_line is 'exit'
 				printf("Child process exiting!\n"); 
+				cleanup_list_alloc(args, len);
 				exit(0);
 			}
-			else if (strcasecmp(BUILT_IN_CMDS[2], stdin_line) == 0){ // stdin_line is 'path'
+			else if (strcasecmp(BUILT_IN_CMDS[2], args[0]) == 0){ // stdin_line is 'path'
 				return 3;
 			}
 			else{ // non-builtin cmd
 				if (access(binPath, F_OK) == 0){
 					// determine executable permissions for binary
 					if (access(binPath, X_OK) == 0){
-						if(len > 0){ // implies existence of args
-							execv(binPath, args);
-							cleanup_list_alloc(args, len);
-						}
-						else{
-							char *no_args[] = {" "}; // placeholder to satisfy compiler error
-							execv(binPath, no_args);
-							free(stdin_line);
-						}
+						execv(binPath, args);
+						cleanup_list_alloc(args, len);
 					}
 					else{
 						perror("Unable to execute binary\n");
