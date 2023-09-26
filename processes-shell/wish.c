@@ -5,19 +5,35 @@
 #include <string.h>
 #include <stdlib.h>
 
-
 // TODO LIST
 // -support built-ins
 // fix return-back-to-prompt when given wrong cmd
+
 // -support batch-mode
-
-
+// -support passing in path var
 // -support redirections from std_out -> user file
 // -support parallel cmds
 // -support add error msg per README
 
-const char WHITESPACE[2] = " ";
+const char WHITESPACE_DELIMITER[2] = " ";
 const char PROMPT[6] = "wish> ";
+const char *BUILT_IN_CMDS[] = { "cd", "exit", "path" };
+
+
+int is_built_in_cmd(char * str){
+	if(strcasecmp(BUILT_IN_CMDS[0], str) == 0){
+		return 1;
+	}
+	else if (strcasecmp(BUILT_IN_CMDS[1], str) == 0){
+		return 2;
+	}
+	else if (strcasecmp(BUILT_IN_CMDS[2], str) == 0){
+		return 3;
+	}
+	else{
+		return -1;
+	}
+}
 
 int cout_occurence(char * str, char c){
 	int cout = 0;
@@ -48,7 +64,7 @@ void cleanup_list_alloc(char* arr[], int len){
 // Given: "cmd -a -b -c"
 // Returns: args = ["cmd", "a", "b", "c", NULL]
 char** str_to_strList(char* arr[], char* str){
-	char *token = strtok(str, WHITESPACE);
+	char *token = strtok(str, WHITESPACE_DELIMITER);
 	int i = 0;
     while (token != NULL)
     {
@@ -59,7 +75,7 @@ char** str_to_strList(char* arr[], char* str){
 			exit(EXIT_FAILURE);
 		}
         strcpy(arr[i++], token);
-        token = strtok(NULL, WHITESPACE);
+        token = strtok(NULL, WHITESPACE_DELIMITER);
     }
 	arr[i] = NULL;
 	return arr;
@@ -103,7 +119,6 @@ int main(int argc, char* argv[])
 			free(stdin_line);
 			exit(1);
 		}
-
 		int rc = fork();
 		if (rc < 0){
 			fprintf(stderr, "fork failed\n");
@@ -117,15 +132,17 @@ int main(int argc, char* argv[])
 			strcpy(binPath, PATH);
 			
 			// Parsing stdin_line for cmd + args!
-			size_t sz = index_of_char(stdin_line, *WHITESPACE) + 1;
+			size_t sz = index_of_char(stdin_line, *WHITESPACE_DELIMITER) + 1;
 			char cmd[sz];
 			copy_up_to_delim(cmd, sz, stdin_line);
 			strcat(binPath, cmd);
+
+			// check for built-in cmd
 			
 			if (access(binPath, F_OK) == 0){
 				// determine executable permissions for binary
 				if (access(binPath, X_OK) == 0){
-					int len = cout_occurence(stdin_line, *WHITESPACE);
+					int len = cout_occurence(stdin_line, *WHITESPACE_DELIMITER);
 
 					if(len > 0){ // implies existence of args
 						len+=2; // allocating space for ["cmd", ... , NULL]
@@ -170,7 +187,7 @@ int main(int argc, char* argv[])
 //TEST MAIN
 //int main(){
 	// char* s = "cmd -a -b -c";
-	// int len = cout_occurence(s, *WHITESPACE) + 2;
+	// int len = cout_occurence(s, *WHITESPACE_DELIMITER) + 2;
 	// char buff[strlen(s) + 1];
 	// char* arr[len];
 
@@ -183,7 +200,7 @@ int main(int argc, char* argv[])
 
 	// // ---------------------------
 	// char* s = "ls -a -b -c";
-	// int sz = index_of_char(s, *WHITESPACE) + 1;
+	// int sz = index_of_char(s, *WHITESPACE_DELIMITER) + 1;
 	// printf("%i\n", sz);
     // char cmd[sz];
 	// copy_up_to_delim(cmd, sz, s);
