@@ -6,19 +6,25 @@
 #include <stdlib.h>
 
 // ========= FEATURES TO IMPLEMENT =========
-// -support built-ins (exit & path)
+// -(1) support built-ins (cd*, exit* & path) ==================> Same problem as below...
+// Try "WIFEXITED" since childs exits (when explicitly calling exit on line 149 and on line 172) which covers exit builtin and erroneous cmd-line 
+// ONE CALLOUT: we need to be able to use different integer codes to distinguish exit() calls so parent can exit program child gives one signal or continue onwards with next command when child gives another signal
 
-// -support batch-mode
-// -support redirections from std_out -> user file
-// -support parallel cmds
-// -support add error msg per README
+// https://linux.die.net/man/2/exit
+// The value status is returned to the parent process as the process's exit status, and can be collected using one of the wait(2) family of calls. 
+
+// -(2) support batch-mode
+// -(3) support redirections from std_out -> user file
+
+// -(4) support parallel cmds
+// -(5) support add error msg per README
 
 // ========= TECHNICAL DEBT =========
-// -support repetitive \n doesn't break shell
-// fix return-back-to-prompt when given wrong cmd
+// -(1) support repetitive \n doesn't break shell
 
 const char WHITESPACE_DELIMITER[2] = " ";
 const char PROMPT[6] = "wish> ";
+const int ERRONEOUS_CMD = 3;
 const char *BUILT_IN_CMDS[] = { "cd", "exit", "path" };
 
 int cout_occurence(char * str, char c){
@@ -43,6 +49,7 @@ char* ptr_to_charArr(char dest[], char* src){
 // TODO: refactor to use arrlen() 
 void cleanup_list_alloc(char* arr[], int len){
 	for(int i = 0; i < len; i++){
+		printf("Freeing %p\n", arr[i]);
 		free(arr[i]);
 	}
 }
@@ -131,14 +138,14 @@ int main(int argc, char* argv[])
 				if(ret_code == -1){
 					perror("Unable to change to directory.\n");
 				}
-				// prompt disappears for some odd reason so re-printing prompt
-				printf("%s", PROMPT);
-				fflush( stdout );
+				// UGLY PATCH - DO NOT USE - GIVES FALSE IMPRESSION THAT PARENT PROCESS IS RUNNING
+				//printf("%s", PROMPT);
+				//fflush( stdout );
 			}
 			else if (strcasecmp(BUILT_IN_CMDS[1], args[0]) == 0){ // stdin_line is 'exit'
-				printf("Child process exiting!\n"); 
+				printf("Child process exiting!\n");
 				cleanup_list_alloc(args, len);
-				exit(0);
+				exit(EXIT_SUCCESS);
 			}
 			else if (strcasecmp(BUILT_IN_CMDS[2], args[0]) == 0){ // stdin_line is 'path'
 				return 3;
@@ -147,8 +154,10 @@ int main(int argc, char* argv[])
 				if (access(binPath, F_OK) == 0){
 					// determine executable permissions for binary
 					if (access(binPath, X_OK) == 0){
+						// NOTE: no need to call cleanup_list_alloc()
+						// since this execv() overwrites both heap and stack space of child process
+						// thereby any allocation is indirectly freed for free!
 						execv(binPath, args);
-						cleanup_list_alloc(args, len);
 					}
 					else{
 						perror("Unable to execute binary\n");
@@ -158,12 +167,17 @@ int main(int argc, char* argv[])
 					perror("Command not found\n");
 				}
 			}
+			printf("child completed!\n");
+			// Exit status 0 has been reserved for when user explicitly calls exit() (line 144)
+			// When child process exits (in this case due to erroneous cmd), we need to use a different error code
+			// and be cautious to avoid using the one's specified below as they are conventionally reserved for special meanings
+			// https://tldp.org/LDP/abs/html/exitcodes.html
+			exit(ERRONEOUS_CMD);
 		}
 		else{
 			// wait for child to finish and print shell prompt again
-			// TODO: modify wait() to receive when child terminates normally:
-			// according to "man wait": WIFEXITED: returns true if the child terminated normally, that is, by calling exit(3) or _exit(2), or by returning from main().
 			wait(NULL);
+			printf("parent finished waiting\n");
 			printf("%s", PROMPT);
 			fflush( stdout );
 			// reset state in order for getline() to work on next iteration.
