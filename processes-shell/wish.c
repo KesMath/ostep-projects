@@ -7,7 +7,6 @@
 
 // ========= FEATURES TO IMPLEMENT =========
 // -(1) support built-ins (path)
-
 // -(2) support batch-mode
 // -(3) support redirections from std_out -> user file
 
@@ -15,7 +14,7 @@
 // -(5) support add error msg per README
 
 // ========= TECHNICAL DEBT =========
-// -(1) support repetitive \n doesn't break shell
+// cd broke somehow??
 
 const char WHITESPACE_DELIMITER[2] = " ";
 const char PROMPT[6] = "wish> ";
@@ -103,16 +102,14 @@ int main(int argc, char* argv[])
 		chars_read = getline(&stdin_line, &stdin_len, stdin);
 		stdin_line[strlen(stdin_line) - 1] = '\0';
 
-		if(chars_read < 0){
-			perror("Unable to read user input");
-			free(stdin_line);
-			exit(1);
-		}
 		int rc = fork();
 		if (rc < 0){
 			fprintf(stderr, "fork failed\n");
 		}
 		else if (rc == 0){
+			if(chars_read == 1 && stdin_line[0] == '\0'){
+				exit(ERRONEOUS_CMD);
+			}
 			char binPath[chars_read + strlen(PATH) + 1];
 			strcpy(binPath, PATH);
 			
@@ -128,15 +125,17 @@ int main(int argc, char* argv[])
 		
 			ptr_to_charArr(buff, stdin_line);
 			str_to_strList(args, buff);
-
+			
 			if(strcasecmp(BUILT_IN_CMDS[0], args[0]) == 0){ // stdin_line is 'cd'
-				int ret_code = chdir(args[1]);
-				if(ret_code == -1){
-					perror("Unable to change to directory.\n");
+				if(args[1] == NULL){
+					perror("An error has occurred\n");
 				}
-				// UGLY PATCH - DO NOT USE - GIVES FALSE IMPRESSION THAT PARENT PROCESS IS RUNNING
-				//printf("%s", PROMPT);
-				//fflush( stdout );
+				else{
+					int ret_code = chdir(args[1]);
+					if(ret_code == -1){
+						perror("Unable to change to directory.\n");
+					}
+				}
 			}
 			else if (strcasecmp(BUILT_IN_CMDS[1], args[0]) == 0){ // stdin_line is 'exit'
 				cleanup_list_alloc(args, len);
