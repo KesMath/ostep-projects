@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
 		if (rc < 0){
 			fprintf(stderr, "fork failed\n");
 		}
-		else if (rc == 0){
+		else if (rc == 0){ // CHILD PROCESS CODE BLOCK
 			if(chars_read == 1 && stdin_line[0] == '\0'){
 				free(stdin_line);
 				exit(ERRONEOUS_CMD);
@@ -170,7 +170,7 @@ int main(int argc, char* argv[])
 			// https://tldp.org/LDP/abs/html/exitcodes.html
 			exit(ERRONEOUS_CMD);
 		}
-		else{
+		else{ // PARENT PROCESS CODE BLOCK
 			// https://linux.die.net/man/2/exit
 			// The value status is returned to the parent process as the process's exit status, and can be collected using one of the wait(2) family of calls.
 			// SYNTAX GUIDE: https://www.geeksforgeeks.org/exit-status-child-process-linux/ 
