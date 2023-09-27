@@ -145,6 +145,9 @@ int main(int argc, char* argv[])
 				exit(USER_EXIT);
 			}
 			else if (strcasecmp(BUILT_IN_CMDS[2], args[0]) == 0){ // stdin_line is 'path'
+				// create new global char* [] BINPATHS = ["bin/",]
+				// append args to this new list and in else statement, wrap logic in a for-loop
+				// where each user cmd is concatenated to BINPATHS[i] and ran (assuming if file exists and is executable permissions)
 				return 3;
 			}
 			else{ // non-builtin cmd
