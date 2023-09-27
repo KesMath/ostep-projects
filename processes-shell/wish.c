@@ -14,7 +14,6 @@
 // -(5) support add error msg per README
 
 // ========= TECHNICAL DEBT =========
-// support null std_line
 
 const char WHITESPACE_DELIMITER[2] = " ";
 const char PROMPT[6] = "wish> ";
@@ -45,7 +44,6 @@ char* ptr_to_charArr(char dest[], char* src){
 // TODO: refactor to use arrlen() 
 void cleanup_list_alloc(char* arr[], int len){
 	for(int i = 0; i < len; i++){
-		//printf("Freeing %p\n", arr[i]);
 		free(arr[i]);
 	}
 }
@@ -103,10 +101,6 @@ int main(int argc, char* argv[])
 		chars_read = getline(&stdin_line, &stdin_len, stdin);
 		stdin_line[strlen(stdin_line) - 1] = '\0';
 
-		if(chars_read == 1 && stdin_line[0] == '\0'){
-			free(stdin_line);
-			exit(ERRONEOUS_CMD);
-		}
 		char binPath[chars_read + strlen(PATH) + 1];
 		strcpy(binPath, PATH);
 		
@@ -128,7 +122,10 @@ int main(int argc, char* argv[])
 			fprintf(stderr, "fork failed\n");
 		}
 		else if (rc == 0){ // CHILD PROCESS CODE BLOCK
-			
+			if(chars_read == 1 && stdin_line[0] == '\0'){
+				free(stdin_line);
+				exit(ERRONEOUS_CMD);
+			}
 			if(strcasecmp(BUILT_IN_CMDS[0], args[0]) == 0){ // stdin_line is 'cd'
 				// NOTE: when a child process calls chdir(), the effects are ephemeral
 				// and only persists within the scope of this process. To have chdir() persist
