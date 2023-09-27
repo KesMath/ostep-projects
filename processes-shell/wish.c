@@ -14,6 +14,7 @@
 // -(5) support add error msg per README
 
 // ========= TECHNICAL DEBT =========
+// support null std_line
 
 const char WHITESPACE_DELIMITER[2] = " ";
 const char PROMPT[6] = "wish> ";
@@ -102,30 +103,31 @@ int main(int argc, char* argv[])
 		chars_read = getline(&stdin_line, &stdin_len, stdin);
 		stdin_line[strlen(stdin_line) - 1] = '\0';
 
+		if(chars_read == 1 && stdin_line[0] == '\0'){
+			free(stdin_line);
+			exit(ERRONEOUS_CMD);
+		}
+		char binPath[chars_read + strlen(PATH) + 1];
+		strcpy(binPath, PATH);
+		
+		// Parsing stdin_line for cmd + args!
+		size_t sz = index_of_char(stdin_line, *WHITESPACE_DELIMITER) + 1;
+		char cmd[sz];
+		copy_up_to_delim(cmd, sz, stdin_line);
+		strcat(binPath, cmd);
+		int len = cout_occurence(stdin_line, *WHITESPACE_DELIMITER);
+		len+=2; // allocating space for ["cmd", ... , NULL]
+		char* args[len];
+		char buff[strlen(stdin_line) + 1];
+	
+		ptr_to_charArr(buff, stdin_line);
+		str_to_strList(args, buff);
+
 		int rc = fork();
 		if (rc < 0){
 			fprintf(stderr, "fork failed\n");
 		}
 		else if (rc == 0){ // CHILD PROCESS CODE BLOCK
-			if(chars_read == 1 && stdin_line[0] == '\0'){
-				free(stdin_line);
-				exit(ERRONEOUS_CMD);
-			}
-			char binPath[chars_read + strlen(PATH) + 1];
-			strcpy(binPath, PATH);
-			
-			// Parsing stdin_line for cmd + args!
-			size_t sz = index_of_char(stdin_line, *WHITESPACE_DELIMITER) + 1;
-			char cmd[sz];
-			copy_up_to_delim(cmd, sz, stdin_line);
-			strcat(binPath, cmd);
-			int len = cout_occurence(stdin_line, *WHITESPACE_DELIMITER);
-			len+=2; // allocating space for ["cmd", ... , NULL]
-			char* args[len];
-			char buff[strlen(stdin_line) + 1];
-		
-			ptr_to_charArr(buff, stdin_line);
-			str_to_strList(args, buff);
 			
 			if(strcasecmp(BUILT_IN_CMDS[0], args[0]) == 0){ // stdin_line is 'cd'
 				// NOTE: when a child process calls chdir(), the effects are ephemeral
@@ -136,10 +138,6 @@ int main(int argc, char* argv[])
 
 			}
 			else if (strcasecmp(BUILT_IN_CMDS[1], args[0]) == 0){ // stdin_line is 'exit'
-				cleanup_list_alloc(args, len);
-				// When child process exits (in this case due to user specification), we need to use a distinguishable error code
-				// and be cautious to avoid using the one's specified below as they are conventionally reserved for special meanings
-				// https://tldp.org/LDP/abs/html/exitcodes.html
 				exit(USER_EXIT);
 			}
 			else if (strcasecmp(BUILT_IN_CMDS[2], args[0]) == 0){ // stdin_line is 'path'
@@ -171,6 +169,7 @@ int main(int argc, char* argv[])
 			exit(ERRONEOUS_CMD);
 		}
 		else{ // PARENT PROCESS CODE BLOCK
+
 			// https://linux.die.net/man/2/exit
 			// The value status is returned to the parent process as the process's exit status, and can be collected using one of the wait(2) family of calls.
 			// SYNTAX GUIDE: https://www.geeksforgeeks.org/exit-status-child-process-linux/ 
@@ -181,9 +180,14 @@ int main(int argc, char* argv[])
 					exit(0);
 				}
 				else if(WEXITSTATUS(status) == CHDIR_EXIT){
-					int ret_code = chdir("..");
-					if(ret_code == -1){
-						perror("Unable to change to directory.\n");
+					if(args[1] == NULL){
+						perror("An error has occurred\n");
+					}
+					else{
+						int ret_code = chdir(args[1]);
+						if(ret_code == -1){
+							perror("Unable to change to directory.\n");
+						}
 					}
 				}
 			}
@@ -191,6 +195,7 @@ int main(int argc, char* argv[])
 			fflush( stdout );
 			// reset state in order for getline() to work on next iteration.
 			free(stdin_line);
+			cleanup_list_alloc(args, len);
 			stdin_line = NULL;
 			stdin_len = 0;
 		}
