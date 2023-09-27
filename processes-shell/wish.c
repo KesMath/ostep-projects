@@ -14,12 +14,12 @@
 // -(5) support add error msg per README
 
 // ========= TECHNICAL DEBT =========
-// cd broke somehow??
 
 const char WHITESPACE_DELIMITER[2] = " ";
 const char PROMPT[6] = "wish> ";
 const int ERRONEOUS_CMD = 3;
 const int USER_EXIT = 4;
+const int CHDIR_EXIT = 5;
 const char *BUILT_IN_CMDS[] = { "cd", "exit", "path" };
 
 int cout_occurence(char * str, char c){
@@ -108,6 +108,7 @@ int main(int argc, char* argv[])
 		}
 		else if (rc == 0){
 			if(chars_read == 1 && stdin_line[0] == '\0'){
+				free(stdin_line);
 				exit(ERRONEOUS_CMD);
 			}
 			char binPath[chars_read + strlen(PATH) + 1];
@@ -127,15 +128,12 @@ int main(int argc, char* argv[])
 			str_to_strList(args, buff);
 			
 			if(strcasecmp(BUILT_IN_CMDS[0], args[0]) == 0){ // stdin_line is 'cd'
-				if(args[1] == NULL){
-					perror("An error has occurred\n");
-				}
-				else{
-					int ret_code = chdir(args[1]);
-					if(ret_code == -1){
-						perror("Unable to change to directory.\n");
-					}
-				}
+				// NOTE: when a child process calls chdir(), the effects are ephemeral
+				// and only persists within the scope of this process. To have chdir() persist
+				// for subsequent cmds, we delegate this task to the parent so iterative calls
+				// to fork() copies processes' memory image onto newer children.
+				exit(CHDIR_EXIT);
+
 			}
 			else if (strcasecmp(BUILT_IN_CMDS[1], args[0]) == 0){ // stdin_line is 'exit'
 				cleanup_list_alloc(args, len);
@@ -181,6 +179,12 @@ int main(int argc, char* argv[])
 			if(WIFEXITED(status)){
 				if (WEXITSTATUS(status) == USER_EXIT){
 					exit(0);
+				}
+				else if(WEXITSTATUS(status) == CHDIR_EXIT){
+					int ret_code = chdir("..");
+					if(ret_code == -1){
+						perror("Unable to change to directory.\n");
+					}
 				}
 			}
 			printf("%s", PROMPT);
