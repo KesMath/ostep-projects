@@ -8,6 +8,7 @@
 // ========= FEATURES TO IMPLEMENT =========
 // -(1) support built-ins (path)
 // -(2) support batch-mode
+
 // -(3) support redirections from std_out -> user file
 
 // -(4) support parallel cmds
@@ -41,9 +42,12 @@ char* ptr_to_charArr(char dest[], char* src){
 	return dest;
 }
 
-// TODO: refactor to use arrlen() 
-void cleanup_list_alloc(char* arr[], int len){
-	for(int i = 0; i < len; i++){
+void cleanup_list_alloc(char* arr[]){
+	int n = 0;
+	while(arr[n] != NULL){
+		n++;
+	}
+	for(int i = 0; i < n; i++){
 		free(arr[i]);
 	}
 }
@@ -57,7 +61,7 @@ char** str_to_strList(char* arr[], char* str){
     {
 		arr[i] = (char *) malloc((sizeof(char) * strlen(token)) + 1);
 		if(!arr[i]){
-			cleanup_list_alloc(arr, i); // counter only increases per successful alloc. Thus, we only cleanup 'counter' times
+			cleanup_list_alloc(arr); // counter only increases per successful alloc. Thus, we only cleanup 'counter' times
 			perror("Unable to allocate heap space");
 			exit(EXIT_FAILURE);
 		}
@@ -192,7 +196,7 @@ int main(int argc, char* argv[])
 			fflush( stdout );
 			// reset state in order for getline() to work on next iteration.
 			free(stdin_line);
-			cleanup_list_alloc(args, len);
+			cleanup_list_alloc(args);
 			stdin_line = NULL;
 			stdin_len = 0;
 		}
