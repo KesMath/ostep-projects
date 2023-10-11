@@ -6,14 +6,12 @@
 #include <stdlib.h>
 
 // ========= FEATURES TO IMPLEMENT =========
-// -(1) support built-ins (path)
-// -(2) support batch-mode
+// -(1) support batch-mode
+// -(2) support redirections from std_out -> user file
 
-// -(3) support redirections from std_out -> user file
-
-// -(4) support parallel cmds
-// -(5) support add error msg per README
-
+// -(3) support parallel cmds
+// -(4) support add error msg per README
+// -(5) support built-ins (path)
 // ========= TECHNICAL DEBT =========
 
 const char WHITESPACE_DELIMITER[2] = " ";
