@@ -16,6 +16,7 @@
 
 const char WHITESPACE_DELIMITER[2] = " ";
 const char PROMPT[6] = "wish> ";
+const char *PATH = "/bin/";
 const int ERRONEOUS_CMD = 3;
 const int USER_EXIT = 4;
 const int CHDIR_EXIT = 5;
@@ -23,7 +24,8 @@ const char *BUILT_IN_CMDS[] = { "cd", "exit", "path" };
 
 int cout_occurence(char * str, char c){
 	int cout = 0;
-    for(int i = 0; i < strlen(str); i++){
+	int len = strlen(str);
+    for(int i = 0; i < len; i++){
         if (str[i] == c) {
             cout++;
         }
@@ -33,7 +35,8 @@ int cout_occurence(char * str, char c){
 
 char* ptr_to_charArr(char dest[], char* src){
 	int i = 0;
-	for(; i < strlen(src); i++){
+	int len = strlen(src);
+	for(; i < len; i++){
 		dest[i] = src[i]; 
 	}
 	dest[i] = '\0';
@@ -72,7 +75,8 @@ char** str_to_strList(char* arr[], char* str){
 
 int index_of_char(char* src, char delim){
 	int i = 0;
-	for(; i < strlen(src); i++){
+	int len = strlen(src);
+	for(; i < len; i++){
 		if(src[i] == delim){
 			return i;
 		}
@@ -89,115 +93,117 @@ char* copy_up_to_delim(char dest[], size_t index, char* src){
 	return dest;
 }
 
+void run_interpeter(char* stdin_line, size_t chars_read, size_t stdin_len){
+	// obtain user cmd
+	chars_read = getline(&stdin_line, &stdin_len, stdin);
+	stdin_line[strlen(stdin_line) - 1] = '\0';
+
+	char binPath[chars_read + strlen(PATH) + 1];
+	strcpy(binPath, PATH);
+	
+	// Parsing stdin_line for cmd + args!
+	size_t sz = index_of_char(stdin_line, *WHITESPACE_DELIMITER) + 1;
+	char cmd[sz];
+	copy_up_to_delim(cmd, sz, stdin_line);
+	strcat(binPath, cmd);
+	int len = cout_occurence(stdin_line, *WHITESPACE_DELIMITER);
+	len+=2; // allocating space for ["cmd", ... , NULL]
+	char* args[len];
+	char buff[strlen(stdin_line) + 1];
+
+	ptr_to_charArr(buff, stdin_line);
+	str_to_strList(args, buff);
+
+	int rc = fork();
+	if (rc < 0){
+		fprintf(stderr, "fork failed\n");
+	}
+	else if (rc == 0){ // CHILD PROCESS CODE BLOCK
+		if(chars_read == 1 && stdin_line[0] == '\0'){
+			free(stdin_line);
+			exit(ERRONEOUS_CMD);
+		}
+		if(strcasecmp(BUILT_IN_CMDS[0], args[0]) == 0){ // stdin_line is 'cd'
+			// NOTE: when a child process calls chdir(), the effects are ephemeral
+			// and only persists within the scope of this process. To have chdir() persist
+			// for subsequent cmds, we delegate this task to the parent so iterative calls
+			// to fork() copies processes' memory image onto newer children.
+			exit(CHDIR_EXIT);
+
+		}
+		else if (strcasecmp(BUILT_IN_CMDS[1], args[0]) == 0){ // stdin_line is 'exit'
+			exit(USER_EXIT);
+		}
+		else if (strcasecmp(BUILT_IN_CMDS[2], args[0]) == 0){ // stdin_line is 'path'
+			// create new global char* [] BINPATHS = ["bin/",]
+			// append args to this new list and in else statement, wrap logic in a for-loop
+			// where each user cmd is concatenated to BINPATHS[i] and ran (assuming if file exists and is executable permissions)
+		}
+		else{ // non-builtin cmd
+			if (access(binPath, F_OK) == 0){
+				// determine executable permissions for binary
+				if (access(binPath, X_OK) == 0){
+					// NOTE: no need to call cleanup_list_alloc()
+					// since this execv() overwrites both heap and stack space of child process
+					// thereby any allocation is indirectly freed for free!
+					execv(binPath, args);
+				}
+				else{
+					perror("Unable to execute binary\n");
+				}
+			}
+			else{
+				perror("Command not found\n");
+			}
+		}
+		// When child process exits (in this case due to erroneous cmd), we need to use a different error code
+		// and be cautious to avoid using the one's specified below as they are conventionally reserved for special meanings
+		// https://tldp.org/LDP/abs/html/exitcodes.html
+		exit(ERRONEOUS_CMD);
+	}
+	else{ // PARENT PROCESS CODE BLOCK
+
+		// https://linux.die.net/man/2/exit
+		// The value status is returned to the parent process as the process's exit status, and can be collected using one of the wait(2) family of calls.
+		// SYNTAX GUIDE: https://www.geeksforgeeks.org/exit-status-child-process-linux/ 
+		int status;
+		wait(&status);
+		if(WIFEXITED(status)){
+			if (WEXITSTATUS(status) == USER_EXIT){
+				exit(0);
+			}
+			else if(WEXITSTATUS(status) == CHDIR_EXIT){
+				if(args[1] == NULL){
+					perror("An error has occurred\n");
+				}
+				else{
+					int ret_code = chdir(args[1]);
+					if(ret_code == -1){
+						perror("Unable to change to directory.\n");
+					}
+				}
+			}
+		}
+		printf("%s", PROMPT);
+		fflush( stdout );
+		// reset state in order for getline() to work on next iteration.
+		free(stdin_line);
+		cleanup_list_alloc(args);
+		stdin_line = NULL;
+		stdin_len = 0;
+	}
+}
+
 int main(int argc, char* argv[])
 {
     char * stdin_line = NULL;
     size_t stdin_len = 0;
-	size_t chars_read;
-	char *PATH = "/bin/";
+	size_t chars_read = 0;
 
     printf("%s", PROMPT);
     fflush( stdout );
     while (1){
-      // obtain user cmd
-		chars_read = getline(&stdin_line, &stdin_len, stdin);
-		stdin_line[strlen(stdin_line) - 1] = '\0';
-
-		char binPath[chars_read + strlen(PATH) + 1];
-		strcpy(binPath, PATH);
-		
-		// Parsing stdin_line for cmd + args!
-		size_t sz = index_of_char(stdin_line, *WHITESPACE_DELIMITER) + 1;
-		char cmd[sz];
-		copy_up_to_delim(cmd, sz, stdin_line);
-		strcat(binPath, cmd);
-		int len = cout_occurence(stdin_line, *WHITESPACE_DELIMITER);
-		len+=2; // allocating space for ["cmd", ... , NULL]
-		char* args[len];
-		char buff[strlen(stdin_line) + 1];
-	
-		ptr_to_charArr(buff, stdin_line);
-		str_to_strList(args, buff);
-
-		int rc = fork();
-		if (rc < 0){
-			fprintf(stderr, "fork failed\n");
-		}
-		else if (rc == 0){ // CHILD PROCESS CODE BLOCK
-			if(chars_read == 1 && stdin_line[0] == '\0'){
-				free(stdin_line);
-				exit(ERRONEOUS_CMD);
-			}
-			if(strcasecmp(BUILT_IN_CMDS[0], args[0]) == 0){ // stdin_line is 'cd'
-				// NOTE: when a child process calls chdir(), the effects are ephemeral
-				// and only persists within the scope of this process. To have chdir() persist
-				// for subsequent cmds, we delegate this task to the parent so iterative calls
-				// to fork() copies processes' memory image onto newer children.
-				exit(CHDIR_EXIT);
-
-			}
-			else if (strcasecmp(BUILT_IN_CMDS[1], args[0]) == 0){ // stdin_line is 'exit'
-				exit(USER_EXIT);
-			}
-			else if (strcasecmp(BUILT_IN_CMDS[2], args[0]) == 0){ // stdin_line is 'path'
-				// create new global char* [] BINPATHS = ["bin/",]
-				// append args to this new list and in else statement, wrap logic in a for-loop
-				// where each user cmd is concatenated to BINPATHS[i] and ran (assuming if file exists and is executable permissions)
-				return 3;
-			}
-			else{ // non-builtin cmd
-				if (access(binPath, F_OK) == 0){
-					// determine executable permissions for binary
-					if (access(binPath, X_OK) == 0){
-						// NOTE: no need to call cleanup_list_alloc()
-						// since this execv() overwrites both heap and stack space of child process
-						// thereby any allocation is indirectly freed for free!
-						execv(binPath, args);
-					}
-					else{
-						perror("Unable to execute binary\n");
-					}
-				}
-				else{
-					perror("Command not found\n");
-				}
-			}
-			// When child process exits (in this case due to erroneous cmd), we need to use a different error code
-			// and be cautious to avoid using the one's specified below as they are conventionally reserved for special meanings
-			// https://tldp.org/LDP/abs/html/exitcodes.html
-			exit(ERRONEOUS_CMD);
-		}
-		else{ // PARENT PROCESS CODE BLOCK
-
-			// https://linux.die.net/man/2/exit
-			// The value status is returned to the parent process as the process's exit status, and can be collected using one of the wait(2) family of calls.
-			// SYNTAX GUIDE: https://www.geeksforgeeks.org/exit-status-child-process-linux/ 
-			int status;
-			wait(&status);
-			if(WIFEXITED(status)){
-				if (WEXITSTATUS(status) == USER_EXIT){
-					exit(0);
-				}
-				else if(WEXITSTATUS(status) == CHDIR_EXIT){
-					if(args[1] == NULL){
-						perror("An error has occurred\n");
-					}
-					else{
-						int ret_code = chdir(args[1]);
-						if(ret_code == -1){
-							perror("Unable to change to directory.\n");
-						}
-					}
-				}
-			}
-			printf("%s", PROMPT);
-			fflush( stdout );
-			// reset state in order for getline() to work on next iteration.
-			free(stdin_line);
-			cleanup_list_alloc(args);
-			stdin_line = NULL;
-			stdin_len = 0;
-		}
+		run_interpeter(stdin_line, chars_read, stdin_len);
    }
 }
 
