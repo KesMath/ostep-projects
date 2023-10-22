@@ -4,15 +4,14 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
+
 
 // ========= FEATURES TO IMPLEMENT =========
-// -(1) support batch-mode
 // -(2) support redirections from std_out -> user file
-
 // -(3) support parallel cmds
-// -(4) support add error msg per README
-// -(5) support built-ins (path)
-// ========= TECHNICAL DEBT =========
+// -(4) support built-ins (path)
+// =========================================
 
 const char WHITESPACE_DELIMITER[2] = " ";
 const char PROMPT[6] = "wish> ";
@@ -93,10 +92,13 @@ char* copy_up_to_delim(char dest[], size_t index, char* src){
 	return dest;
 }
 
-void run_interpeter(char* stdin_line, size_t chars_read, size_t stdin_len){
-	// obtain user cmd
-	chars_read = getline(&stdin_line, &stdin_len, stdin);
-	stdin_line[strlen(stdin_line) - 1] = '\0';
+void run_interpreter(FILE* stream, char* stdin_line, size_t stdin_len, size_t chars_read, bool skipRead){
+	printf("%d\n", skipRead);
+	if(!skipRead){
+		printf("YOO");
+		chars_read = getline(&stdin_line, &stdin_len, stream);
+		stdin_line[strlen(stdin_line) - 1] = '\0';
+	}
 
 	char binPath[chars_read + strlen(PATH) + 1];
 	strcpy(binPath, PATH);
@@ -199,12 +201,30 @@ int main(int argc, char* argv[])
     char * stdin_line = NULL;
     size_t stdin_len = 0;
 	size_t chars_read = 0;
+	bool skipRead = false;
 
-    printf("%s", PROMPT);
-    fflush( stdout );
-    while (1){
-		run_interpeter(stdin_line, chars_read, stdin_len);
-   }
+	if (argc == 2){
+		FILE *cmd_file = fopen(argv[1], "r");
+    	if(cmd_file == NULL){
+        	printf("Unable to open file at path: %s\n", argv[1]);
+        	exit(-1);
+    	}
+		// obtain user command from user-defined file stream
+		chars_read = getline(&stdin_line, &stdin_len, cmd_file);
+		stdin_line[strlen(stdin_line) - 1] = '\0';
+		while(chars_read != -1){
+			run_interpreter(cmd_file, stdin_line, stdin_len, chars_read, !skipRead);
+			skipRead = true;
+		}
+	}
+	else{
+		printf("%s", PROMPT);
+		fflush( stdout );
+		while (1){
+			// obtain user command from stdin
+			run_interpreter(stdin, stdin_line, stdin_len, chars_read, skipRead);
+		}
+	}
 }
 
 
