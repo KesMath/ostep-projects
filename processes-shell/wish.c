@@ -93,13 +93,14 @@ char* copy_up_to_delim(char dest[], size_t index, char* src){
 }
 
 void run_interpreter(FILE* stream, char* stdin_line, size_t stdin_len, size_t chars_read, bool skipRead){
-	printf("%d\n", skipRead);
+	//printf("%d\n", skipRead);
 	if(!skipRead){
-		printf("YOO");
+		//printf("YOO\n");
 		chars_read = getline(&stdin_line, &stdin_len, stream);
 		stdin_line[strlen(stdin_line) - 1] = '\0';
 	}
-
+	//printf("Chars read: %li\n", chars_read);
+	//printf("%s\n", stdin_line);
 	char binPath[chars_read + strlen(PATH) + 1];
 	strcpy(binPath, PATH);
 	
@@ -190,6 +191,7 @@ void run_interpreter(FILE* stream, char* stdin_line, size_t stdin_len, size_t ch
 		fflush( stdout );
 		// reset state in order for getline() to work on next iteration.
 		free(stdin_line);
+		//memset(stdin_line, '\0', chars_read);
 		cleanup_list_alloc(args);
 		stdin_line = NULL;
 		stdin_len = 0;
@@ -210,18 +212,18 @@ int main(int argc, char* argv[])
         	exit(-1);
     	}
 		// obtain user command from user-defined file stream
-		chars_read = getline(&stdin_line, &stdin_len, cmd_file);
-		stdin_line[strlen(stdin_line) - 1] = '\0';
-		while(chars_read != -1){
+		while((chars_read = getline(&stdin_line, &stdin_len, cmd_file)) != -1){
+			stdin_line[strlen(stdin_line) - 1] = '\0';
 			run_interpreter(cmd_file, stdin_line, stdin_len, chars_read, !skipRead);
 			skipRead = true;
+			stdin_line = NULL;
 		}
 	}
 	else{
 		printf("%s", PROMPT);
 		fflush( stdout );
 		while (1){
-			// obtain user command from stdin
+			// obtain user command from stdin	
 			run_interpreter(stdin, stdin_line, stdin_len, chars_read, skipRead);
 		}
 	}
