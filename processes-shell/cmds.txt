@@ -1,2 +1,2 @@
-ls -a --author -l
+ls -al
 pwd
