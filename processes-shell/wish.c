@@ -14,7 +14,7 @@
 // =========================================
 
 const char WHITESPACE_DELIMITER[2] = " ";
-const char PROMPT[6] = "wish> ";
+const char PROMPT[7] = "wish> ";
 const char *PATH = "/bin/";
 const int ERRONEOUS_CMD = 3;
 const int USER_EXIT = 4;
@@ -215,7 +215,6 @@ int main(int argc, char* argv[])
 		while((chars_read = getline(&stdin_line, &stdin_len, cmd_file)) != -1){
 			stdin_line[strlen(stdin_line) - 1] = '\0';
 			run_interpreter(cmd_file, stdin_line, stdin_len, chars_read, !skipRead);
-			skipRead = true;
 			stdin_line = NULL;
 		}
 	}
