@@ -215,7 +215,7 @@ int main(int argc, char* argv[])
 		while((chars_read = getline(&stdin_line, &stdin_len, cmd_file)) != -1){
 			stdin_line[strlen(stdin_line) - 1] = '\0';
 			run_interpreter(cmd_file, stdin_line, stdin_len, chars_read, !skipRead);
-			stdin_line = NULL;
+;			stdin_line = NULL;
 		}
 	}
 	else{
