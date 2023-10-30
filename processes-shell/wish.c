@@ -244,29 +244,3 @@ int main(int argc, char* argv[])
 		}
 	}
 }
-
-
-//TEST MAIN
-// int main(){
-// 	char* s = "cmd -a -b -c";
-// 	int len = cout_occurence(s, *WHITESPACE_DELIMITER) + 2;
-// 	char buff[strlen(s) + 1];
-// 	char* arr[len];
-
-// 	ptr_to_charArr(buff, s);
-// 	str_to_strList(arr, buff);
-// 	for(int i = 0; i < len; i++){
-// 		printf("%s\n", arr[i]);
-// 	}
-// 	cleanup_list_alloc(arr, len);
-
-// 	// ---------------------------
-// 	char* s = "ls -a -b -c";
-// 	int sz = index_of_char(s, *WHITESPACE_DELIMITER) + 1;
-// 	printf("%i\n", sz);
-//     char cmd[sz];
-// 	copy_up_to_delim(cmd, sz, s);
-// 	printf("%s\n", cmd);
-// 	printf("%li\n", strlen(cmd));
-// 	printf("%d\n", is_redirect("ls -la /tmp > output"));
-// }
