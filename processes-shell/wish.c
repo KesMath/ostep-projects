@@ -104,7 +104,6 @@ char* copy_up_to_delim(char dest[], size_t index, char* src){
 void run_interpreter(FILE* stream, char* stdin_line, size_t stdin_len, size_t chars_read, bool skipRead){
 	//printf("%d\n", skipRead);
 	if(!skipRead){
-		//printf("YOO\n");
 		chars_read = getline(&stdin_line, &stdin_len, stream);
 		stdin_line[strlen(stdin_line) - 1] = '\0';
 	}
@@ -158,7 +157,6 @@ void run_interpreter(FILE* stream, char* stdin_line, size_t stdin_len, size_t ch
 					if (is_redirect(stdin_line)){
 						close(STDOUT_FILENO);
 						open(args[len - 2], O_CREAT|O_WRONLY|O_TRUNC, S_IRWXU);
-						//TODO: remove last 2 elements in args
 						args[len - 2] = NULL;
 						args[len - 3] = NULL;
 					}
