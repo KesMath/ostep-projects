@@ -1,2 +1,6 @@
-ls -al
+cat wish.c
+ls -l -a --author
 pwd
+cd ..
+ls -all
+cat README.md
