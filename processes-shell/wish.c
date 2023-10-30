@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <fcntl.h>
 
 
 // ========= FEATURES TO IMPLEMENT =========
@@ -154,6 +155,13 @@ void run_interpreter(FILE* stream, char* stdin_line, size_t stdin_len, size_t ch
 			if (access(binPath, F_OK) == 0){
 				// determine executable permissions for binary
 				if (access(binPath, X_OK) == 0){
+					if (is_redirect(stdin_line)){
+						close(STDOUT_FILENO);
+						open(args[len - 2], O_CREAT|O_WRONLY|O_TRUNC, S_IRWXU);
+						//TODO: remove last 2 elements in args
+						args[len - 2] = NULL;
+						args[len - 3] = NULL;
+					}
 					// NOTE: no need to call cleanup_list_alloc()
 					// since this execv() overwrites both heap and stack space of child process
 					// thereby any allocation is indirectly freed for free!
@@ -221,7 +229,8 @@ int main(int argc, char* argv[])
 		// obtain user command from user-defined file stream
 		while((chars_read = getline(&stdin_line, &stdin_len, cmd_file)) != -1){
 			stdin_line[strlen(stdin_line) - 1] = '\0';
-			printf("STDLINE: %s\n", stdin_line);
+			// FIXME: slight bug when running (Nth - 1) cmd
+			//printf("STDLINE: %s\n", stdin_line);
 			run_interpreter(cmd_file, stdin_line, stdin_len, chars_read, !skipRead);
 			stdin_line = NULL;
 		}
