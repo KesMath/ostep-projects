@@ -9,9 +9,8 @@
 
 
 // ========= FEATURES TO IMPLEMENT =========
-// -(2) support redirections from std_out -> user file
-// -(3) support parallel cmds
-// -(4) support built-ins (path)
+// -(1) support parallel cmds
+// -(2) support built-ins (path)
 // =========================================
 
 const char WHITESPACE_DELIMITER[2] = " ";
