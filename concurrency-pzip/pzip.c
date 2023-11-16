@@ -12,4 +12,6 @@
 // L = malloc(sizeof(int) * 3)
 // L = [3, 6, 8], thread cout = 3
 // T1 = [0,3], T2 = [3,6], T3 = [6,8]
-// in parallel, each thread will compute their diffs = {4,3,2} along with S[b] = {a,b,c} thus 4a3b2c
+// in parallel, each thread will compute their diffs = {4,3,2} along with S[b] = {a,b,c} thus
+// Unordered_Result = 2c4a3b, as order output is not guaranteed with threads
+// Hence for every S[b], we get index(S[b]), and write {Unordered_Result[index(S[b]) - 1], S[b]} to ensure proper ordering
