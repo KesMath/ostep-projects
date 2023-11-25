@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 // STEPS:
 // (1) - Read in File as a string, S
 // (2) - Pass S into a function that returns number of unique chars, K
@@ -31,9 +32,18 @@ int cout_unique_chars(char *s){
     }
 }
 
-// int** get_transitional_indicies(char *s){
-  
-// }
+// Given s = "aaaabbbcc"
+// Returns [3, 6]
+int* get_transitional_indicies(int* ptr, char *s){
+    int k = 0;
+    for(int i = 0; i < strlen(s) - 1; i++){
+        if(s[i] != s[i+1]){
+            ptr[k] = i;
+            k++;
+        }
+    }
+    return ptr;
+}
 
 int main(int argc, char* argv[])
 {
@@ -51,7 +61,16 @@ int main(int argc, char* argv[])
     //     printf("File path not supplied. Exiting...");
     //     	exit(-1);
     // }
-    printf("%i\n", cout_unique_chars(""));
-    printf("%i\n", cout_unique_chars("abcdefghijklmnopqrstuvqxyz"));
-    printf("%i\n", cout_unique_chars("aaaabbbcc"));
+    //printf("%i\n", cout_unique_chars("abcdefghijklmnopqrstuvqxyz"));
+    //printf("%i\n", cout_unique_chars("aaaabbbcc"));
+
+    char* s = "aaabcdefghijklmnopqrstuvqxyzzzz";
+    int a = cout_unique_chars(s);
+    a = a - 1;
+    int* ptr = (int*) malloc(sizeof(int) * a);
+    get_transitional_indicies(ptr, s);
+    for(int i = 0; i < a; i++){
+        printf("%i\n", ptr[i]);
+    }
+    free(ptr);
 }
