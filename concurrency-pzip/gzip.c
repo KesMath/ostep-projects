@@ -19,13 +19,16 @@
 // Hence for every S[b], we get index(S[b]), and write {Unordered_Result[index(S[b]) - 1], S[b]} to ensure proper ordering
 
 int cout_unique_chars(char *s){
-    int cout = 1;
-    for(int i = 0; i < strlen(s) - 1; i++){
-        if(s[i] != s[i+1]){
-            cout++;
-        }
+    if (strlen(s) == 0){return 0;}
+    else{
+        int cout = 1;
+        for(int i = 0; i < strlen(s) - 1; i++){
+            if(s[i] != s[i+1]){
+                cout++;
+            }
     }
     return cout;
+    }
 }
 
 // int** get_transitional_indicies(char *s){
@@ -48,6 +51,7 @@ int main(int argc, char* argv[])
     //     printf("File path not supplied. Exiting...");
     //     	exit(-1);
     // }
+    printf("%i\n", cout_unique_chars(""));
     printf("%i\n", cout_unique_chars("abcdefghijklmnopqrstuvqxyz"));
     printf("%i\n", cout_unique_chars("aaaabbbcc"));
 }
